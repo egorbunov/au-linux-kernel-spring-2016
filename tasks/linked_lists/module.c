@@ -66,7 +66,10 @@ static int __init print_processes_backwards(void)
         proc_entry = stack_pop(&proc_stack);
         exe_name = STACK_ENTRY_DATA(proc_entry, char*);
         printk(KERN_ALERT "Process executable name: [ %s ]\n", exe_name);
+        kfree(exe_name);
+        delete_stack_entry(proc_entry);
     }
+    goto p_exit;
 
 clean_stack:
     while (!stack_empty(&proc_stack)) {
