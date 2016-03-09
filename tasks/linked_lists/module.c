@@ -34,9 +34,49 @@ static void __init test_stack(void)
     assert(stack_empty(&data_stack));
 }
 
-static void __init print_processes_backwards(void)
+static int __init print_processes_backwards(void)
 {
-    // TODO
+    int result = 0;
+    stack_entry_t* proc_entry;
+    struct task_struct* proc;
+    char* exe_name;
+    LIST_HEAD(proc_stack);
+
+    pr_alert("Printing processes backwards");
+
+    for_each_process(proc) {
+        exe_name = kmalloc(TASK_COMM_LEN, GFP_KERNEL);
+        if (!exe_name) {
+            result = -ENOMEM;
+            goto p_exit;
+        }
+
+        proc_entry = create_stack_entry((void*)exe_name);
+        if (!proc_entry) {
+            kfree(exe_name);
+            result = -ENOMEM;
+            goto clean_stack;
+        }
+
+        exe_name = get_task_comm(exe_name, proc);
+        stack_push(&proc_stack, proc_entry);
+    }
+
+    while (!stack_empty(&proc_stack)) {
+        proc_entry = stack_pop(&proc_stack);
+        exe_name = STACK_ENTRY_DATA(proc_entry, char*);
+        printk(KERN_ALERT "Process executable name: [ %s ]\n", exe_name);
+    }
+
+clean_stack:
+    while (!stack_empty(&proc_stack)) {
+        proc_entry = stack_pop(&proc_stack);
+        exe_name = STACK_ENTRY_DATA(proc_entry, char*);
+        kfree(exe_name);
+        delete_stack_entry(proc_entry);
+    }
+p_exit:
+    return result;
 }
 
 static int __init ll_init(void)
