@@ -10,9 +10,9 @@
 void allocate_with_mmap() {
 	uint64_t result_size = 0;
 	size_t cur_cize = 1000000000000000;
-
-	while (cur_cize > 1) {
-		void* result = mmap(0, cur_cize, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+	int fd = open("/dev/zero", O_RDONLY);
+	while (cur_cize > 0) {
+		void* result = mmap(0, cur_cize, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, fd, 0);
 		if (result == MAP_FAILED) {
 			cur_cize = cur_cize / 2;
 		} else {
